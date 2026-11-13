@@ -321,25 +321,19 @@ theorem pow51_upper :
   norm_num
   interval_decide 78
 
--- 2^58 (for b=40): direct expanded certificate
+-- 2^58 (for b=40): reflective sum certificate
 theorem pow58_upper :
     (1 + 193571378 / (10:ℝ)^16) * f ((2:ℝ)^(58:ℕ)) ≤ (1.04319 : ℝ) + (1:ℝ) / 10^5 := by
-  unfold BKLNW.f
-  rw [show ⌊log ((2:ℝ)^(58:ℕ)) / log 2⌋₊ = 58 from BKLNW.floor_log_two_pow 58]
-  finsum_expand
-  simp only [Nat.cast_ofNat, BKLNW.two_pow_eq_exp_log, ← exp_mul]
-  norm_num
-  interval_decide 89
+  have h := alpha_pow_upper_bridge 58 (104320/100000) (by native_decide)
+  calc _ ≤ ↑(104320 / 100000 : ℚ) := h
+    _ = (1.04319 : ℝ) + (1:ℝ) / 10^5 := by push_cast; norm_num
 
--- 2^63 (for b=43): direct expanded certificate
+-- 2^63 (for b=43): reflective sum certificate
 theorem pow63_upper :
     (1 + 193571378 / (10:ℝ)^16) * f ((2:ℝ)^(63:ℕ)) ≤ (1.03252 : ℝ) + (1:ℝ) / 10^5 := by
-  unfold BKLNW.f
-  rw [show ⌊log ((2:ℝ)^(63:ℕ)) / log 2⌋₊ = 63 from BKLNW.floor_log_two_pow 63]
-  finsum_expand
-  simp only [Nat.cast_ofNat, BKLNW.two_pow_eq_exp_log, ← exp_mul]
-  norm_num
-  interval_decide 98
+  have h := alpha_pow_upper_bridge 63 (103253/100000) (by native_decide)
+  calc _ ≤ ↑(103253 / 100000 : ℚ) := h
+    _ = (1.03252 : ℝ) + (1:ℝ) / 10^5 := by push_cast; norm_num
 
 -- 2^145 (for b=100)
 theorem pow145_upper :
