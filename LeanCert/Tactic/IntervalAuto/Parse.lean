@@ -646,7 +646,9 @@ private def nameEndsWithStr (n : Lean.Name) (suffix : String) : Bool :=
     - isStrict: true for < or >, false for ≤ or ≥
     - isReversed: true for ≥ or > (need to flip the comparison) -/
 def parsePointIneq (goal : Lean.Expr) : MetaM (Option (Lean.Expr × Lean.Expr × Bool × Bool)) := do
-  let goal ← whnf goal
+  -- Preserve native comparison heads before reduction unfolds Real's order implementation.
+  let goal ← if goal.isAppOf ``LE.le || goal.isAppOf ``LT.lt ||
+      goal.isAppOf ``GE.ge || goal.isAppOf ``GT.gt then pure goal else whnf goal
   let fn := goal.getAppFn
   let args := goal.getAppArgs
 

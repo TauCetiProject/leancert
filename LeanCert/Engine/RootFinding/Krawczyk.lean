@@ -165,7 +165,7 @@ theorem jacobianAt_mem_intervalJacobian {n : Nat} (F : Fin n → Expr)
 
 noncomputable def matrixCLM {n : Nat} (A : Matrix (Fin n) (Fin n) ℝ) :
     (Fin n → ℝ) →L[ℝ] (Fin n → ℝ) :=
-  ContinuousLinearMap.mk (Matrix.mulVecLin A)
+  (Matrix.mulVecLin A).toContinuousLinearMap
 
 noncomputable def newtonMap {n : Nat} (Y : Matrix (Fin n) (Fin n) ℝ)
     (F : Fin n → Expr) (x : Fin n → ℝ) : Fin n → ℝ :=

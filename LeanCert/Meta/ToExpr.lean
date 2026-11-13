@@ -288,44 +288,9 @@ partial def toLeanCertExpr (e : Lean.Expr) : TranslateM Lean.Expr := do
 where
   /-- Try to match the expression against known patterns. -/
   tryMatchExpr (e : Lean.Expr) : TranslateM (Option Lean.Expr) := do
-    -- For `Real`, `abs x` often elaborates to a max/sup form like
-    -- `SemilatticeSup.toMax.1 x (-x)` or a private `Real.sup` helper.
-    -- Recognize these shapes and normalize them to sqrt(x * x).
-    if let some (a, b) := (← toMaxArgs? e) then
-      let absArg? : Option Lean.Expr ←
-        match_expr b with
-        | Neg.neg _ _ b' =>
-          if b' == a then
-            pure (some a)
-          else
-            pure none
-        | _ =>
-          match_expr a with
-          | Neg.neg _ _ a' =>
-            if a' == b then
-              pure (some b)
-            else
-              pure none
-          | _ => pure none
-      if let some x := absArg? then
-        let ex ← toLeanCertExpr x
-        let exSq ← mkExprMul ex ex
-        return some (← mkExprSqrt exSq)
-      -- Generic max case: reify via a closed form with abs.
-      let ea ← toLeanCertExpr a
-      let eb ← toLeanCertExpr b
-      return some (← mkExprMaxViaAbs ea eb)
-
-    -- Generic min case: reify via a closed form with abs.
-    if let some (a, b) := (← toMinArgs? e) then
-      let ea ← toLeanCertExpr a
-      let eb ← toLeanCertExpr b
-      return some (← mkExprMinViaAbs ea eb)
-
     let fn := e.getAppFn
     let args := e.getAppArgs
-    let some headName := fn.constName?
-      | return none
+    let headName := fn.constName?.getD .anonymous
 
     -- Nullary constants
     if headName == ``Real.pi then
@@ -387,6 +352,41 @@ where
           let prod ← mkExprMul logBase qExpr
           return some (← mkExprExp prod)
       return none
+
+    -- Try definitional max/min recognition only after known arithmetic heads.
+    -- For `Real`, `abs x` often elaborates to a max/sup form like
+    -- `SemilatticeSup.toMax.1 x (-x)` or a private `Real.sup` helper.
+    -- Recognize these shapes and normalize them to sqrt(x * x).
+    if let some (a, b) := (← toMaxArgs? e) then
+      let absArg? : Option Lean.Expr ←
+        match_expr b with
+        | Neg.neg _ _ b' =>
+          if b' == a then
+            pure (some a)
+          else
+            pure none
+        | _ =>
+          match_expr a with
+          | Neg.neg _ _ a' =>
+            if a' == b then
+              pure (some b)
+            else
+              pure none
+          | _ => pure none
+      if let some x := absArg? then
+        let ex ← toLeanCertExpr x
+        let exSq ← mkExprMul ex ex
+        return some (← mkExprSqrt exSq)
+      -- Generic max case: reify via a closed form with abs.
+      let ea ← toLeanCertExpr a
+      let eb ← toLeanCertExpr b
+      return some (← mkExprMaxViaAbs ea eb)
+
+    -- Generic min case: reify via a closed form with abs.
+    if let some (a, b) := (← toMinArgs? e) then
+      let ea ← toLeanCertExpr a
+      let eb ← toLeanCertExpr b
+      return some (← mkExprMinViaAbs ea eb)
 
     return none
 
